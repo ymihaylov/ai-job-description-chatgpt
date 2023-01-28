@@ -1,11 +1,14 @@
 import React, { useState } from "react";
+import { TagsInput } from "react-tag-input-component";
 
 export default function Dashboard() {
   const [jobDescription, setJobDescription] = useState("");
 
+  const [keyWords, setKeyWords] = useState([]);
+
   const [jobTitle, setJobTitle] = useState("");
   const [industry, setIndustry] = useState("");
-  const [keyWords, setKeyWords] = useState("");
+
   const [tone, setTone] = useState("");
   const [numWords, setNumWords] = useState("");
 
@@ -78,14 +81,13 @@ export default function Dashboard() {
               <label htmlFor="keywords" className="sr-only">
                 Keywords for AI (Optional)
               </label>
-              <textarea
-                rows={7}
+              <TagsInput
                 value={keyWords}
-                onChange={(e) => setKeyWords(e.target.value)}
+                onChange={setKeyWords}
                 name="keyWords"
                 id="keyWords"
-                placeholder="Keywords for AI (Optional)"
-                className="block w-full rounded-md bg-chatgpt-grey border border-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-2 placeholder-white-100 my-2 text-white"
+                placeHolder={"Keywords - Press enter on every word! (Optional)"}
+                classNames={{input: "bg-chatgpt-grey text-white"}}
               />
             </div>
             <div className="flex flex-col">

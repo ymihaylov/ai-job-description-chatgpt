@@ -1,7 +1,7 @@
 type GenerateDescriptionInput = {
   jobTitle: string,
   industry?: string,
-  keyWords?: string,
+  keyWords?: string[],
   tone: string,
   numWords: number,
 };
@@ -30,7 +30,7 @@ const generateDescription = async (input: GenerateDescriptionInput, isMock: bool
         prompt: `Write a job description for a  ${jobTitle} role
         ${industry ? `in the ${industry} industry` : ""} that is around ${numWords}
           words in a ${tone} tone.
-          ${keyWords ? `Incorporate the following keywords: ${keyWords}.` : ""}.
+          ${keyWords ? `Incorporate the following keywords: ${keyWords.join(', ')}.` : ""}.
           The job position should be described in a way that is SEO friendly, highlighting its unique features and benefits.`,
         max_tokens: 300,
         temperature: 0.5,
