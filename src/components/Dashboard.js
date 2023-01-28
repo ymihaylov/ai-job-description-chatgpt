@@ -30,6 +30,7 @@ export default function Dashboard() {
     });
 
     setIsGenerating(false);
+
     const data = await res.json();
     setJobDescription(data.jobDescription.trim());
   };
@@ -122,7 +123,7 @@ export default function Dashboard() {
             </div>
 
             <button
-              className={`bg-blue-600 w-full hover:chatgpt-green text-white font-bold mt-6 py-2 px-4 rounded
+              className={`bg-chatgpt-green w-full hover:chatgpt-green text-white font-bold mt-6 py-2 px-4 rounded
                 ${
                   isGenerating || jobTitle === ""
                     ? "cursor-not-allowed opacity-50"
@@ -156,7 +157,7 @@ export default function Dashboard() {
             />
             <button
               onClick={handleCopy}
-              className="bg-blue-600 hover:chatgpt-green text-white font-bold py-2 px-4 rounded"
+              className="bg-chatgpt-green hover:chatgpt-green text-white font-bold py-2 px-4 rounded"
               type="submit"
               disabled={jobDescription === ""}
             >
