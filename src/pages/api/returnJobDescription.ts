@@ -12,6 +12,10 @@ const inputDefaults: Pick<GenerateDescriptionInput, 'tone' | 'numWords'> = {
 };
 
 const generateDescription = async (input: GenerateDescriptionInput, isMock: boolean = false) => {
+  if (!process.env.OPENAI_API_KEY) {
+    return "API Key is empty.";
+  }
+
   const { jobTitle, industry, keyWords, tone, numWords } = {...inputDefaults, ...input};
 
   if (isMock) {
