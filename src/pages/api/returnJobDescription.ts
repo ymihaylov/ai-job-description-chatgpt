@@ -1,6 +1,7 @@
 import rateLimit from "@/utils/rateLimiter";
 import { NextApiRequest, NextApiResponse } from "next";
-import { v4 as uuidv4 } from 'uuid'
+import { v4 } from "uuid";
+// import { v4 as uuidv4 } from "uuid"
 
 type GenerateDescriptionInput = {
   jobTitle: string,
@@ -59,8 +60,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { jobTitle, industry, keyWords, tone, numWords } = req.body;
 
   try {
-    await limiter.check(res, 10, 'CACHE_TOKEN') // 10 requests per minute
-    res.status(200).json({ id: uuidv4() })
+    await limiter.check(res, 1, 'CACHE_TOKEN') // 10 requests per minute
+    res.status(200).json({ id: v4() })
   } catch {
     res.status(429).json({ error: 'Rate limit exceeded' })
   }
