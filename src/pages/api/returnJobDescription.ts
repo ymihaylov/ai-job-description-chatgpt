@@ -1,7 +1,6 @@
-import rateLimit from "@/utils/rateLimiter";
+import RateLimit from "@/utils/rateLimiter";
 import { NextApiRequest, NextApiResponse } from "next";
-import { v4 } from "uuid";
-// import { v4 as uuidv4 } from "uuid"
+import { v4 as uuidv4 } from "uuid"
 
 type GenerateDescriptionInput = {
   jobTitle: string,
@@ -17,8 +16,8 @@ const inputDefaults: Pick<GenerateDescriptionInput, 'tone' | 'numWords'> = {
 };
 
 const generateDescription = async (input: GenerateDescriptionInput, isMock: boolean = false) => {
-  if (!process.env.OPENAI_API_KEY) {
-    return "API Key not provided!2";
+  if ( ! process.env.OPENAI_API_KEY) {
+    return "API Key not provided!";
   }
 
   const { jobTitle, industry, keyWords, tone, numWords } = {...inputDefaults, ...input};
@@ -51,30 +50,30 @@ const generateDescription = async (input: GenerateDescriptionInput, isMock: bool
   return data.choices[0].text;
 };
 
-const limiter = rateLimit({
+const limiter = RateLimit({
   interval: 1 * 1000, // 60 seconds
   uniqueTokenPerInterval: 1, // Max 500 users per second
 });
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { jobTitle, industry, keyWords, tone, numWords } = req.body;
+export default async function handler(request: NextApiRequest, response: NextApiResponse) {
+  const { jobTitle, industry, keyWords, tone, numWords } = request.body;
 
   try {
-    await limiter.check(res, 1, 'CACHE_TOKEN') // 10 requests per minute
-    res.status(200).json({ id: v4() })
+    await limiter.check(response, 40, 'CACHE_TOKEN') // requests per minute
+
+    const jobDescription = await generateDescription({
+      jobTitle,
+      industry,
+      keyWords,
+      tone,
+      numWords,
+    }, true);
+
+    response.status(200).json({
+      id: uuidv4(),
+      jobDescription,
+    });
   } catch {
-    res.status(429).json({ error: 'Rate limit exceeded' })
+    response.status(429).json({ error: 'Rate limit exceeded' })
   }
-
-  const jobDescription = await generateDescription({
-    jobTitle,
-    industry,
-    keyWords,
-    tone,
-    numWords,
-  }, true);
-
-  res.status(200).json({
-    jobDescription,
-  });
 }

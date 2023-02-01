@@ -17,8 +17,10 @@ export default function Dashboard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setIsGenerating(true);
-    const res = await fetch("/api/returnJobDescription", {
+
+    const response = await fetch("/api/returnJobDescription", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -30,12 +32,12 @@ export default function Dashboard() {
         tone,
         numWords,
       }),
-    });
-
-    setIsGenerating(false);
-
-    const data = await res.json();
-    setJobDescription(data.jobDescription.trim());
+    }).then(async (res) => {
+      const data = await res.json();
+      setJobDescription(data.jobDescription.trim());
+    }).catch((error) => {
+      alert("Internal server error! Probably reached rate limit of requests.");
+    }).finally((data) => setIsGenerating(false));
   };
 
   const handleCopy = () => {
