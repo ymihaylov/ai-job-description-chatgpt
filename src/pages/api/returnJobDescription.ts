@@ -1,4 +1,5 @@
 import RateLimit from "@/utils/rateLimiter";
+import { prisma } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import { v4 as uuidv4 } from "uuid"
 
@@ -20,7 +21,7 @@ const generateDescription = async (input: GenerateDescriptionInput, isMock: bool
     return "API Key not provided!";
   }
 
-  const { jobTitle, industry, keyWords, tone, numWords } = {...inputDefaults, ...input};
+  const { jobTitle, industry, keyWords, tone, numWords } = input;
 
   if (isMock) {
     return "Mocked description";
@@ -51,29 +52,41 @@ const generateDescription = async (input: GenerateDescriptionInput, isMock: bool
 };
 
 const limiter = RateLimit({
-  interval: 1 * 1000, // 60 seconds
-  uniqueTokenPerInterval: 1, // Max 500 users per second
+  interval: 1 * 1000,
+  uniqueTokenPerInterval: 1,
 });
 
-export default async function handler(request: NextApiRequest, response: NextApiResponse) {
-  const { jobTitle, industry, keyWords, tone, numWords } = request.body;
+interface GenerationRequest<T> extends NextApiRequest {
+  body: T
+}
 
+enum RequestStatus {
+  Requested = "requested",
+  Failed = "failed",
+  Success = "successed"
+}
+
+export default async function handler(request: GenerationRequest<GenerateDescriptionInput>, response: NextApiResponse) {
   try {
     await limiter.check(response, 40, 'CACHE_TOKEN') // requests per minute
 
-    const jobDescription = await generateDescription({
-      jobTitle,
-      industry,
-      keyWords,
-      tone,
-      numWords,
-    }, true);
+    const inputWithAppliedDefaults = {...request.body, ...inputDefaults};
+
+    const jobDescription = await generateDescription(inputWithAppliedDefaults, true);
+
+    await prisma.GenerationRequest.create({
+      data: {
+        ...inputWithAppliedDefaults,
+        status: RequestStatus.Success
+      },
+    });
 
     response.status(200).json({
       id: uuidv4(),
       jobDescription,
     });
-  } catch {
-    response.status(429).json({ error: 'Rate limit exceeded' })
+  } catch (e) {
+    console.log(e);
+    // response.status(429).json({ error: 'Rate limit exceeded' })
   }
 }

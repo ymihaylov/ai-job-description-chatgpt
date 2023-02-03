@@ -10,6 +10,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model FormSubmission {
+model GenerationRequest {
+  id Int @id @default(autoincrement())
+  jobTitle String
+  industry String?
+  keyWords String?
+  tone String?
+  numWords Int?
+  fullTextPrompt String
+  status String
+  responseText String?
+}
 
+model User {
+  id Int @id @default(autoincrement())
 }
