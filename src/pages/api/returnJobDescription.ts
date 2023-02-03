@@ -1,5 +1,5 @@
 import RateLimit from "@/utils/rateLimiter";
-import { prisma } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import { v4 as uuidv4 } from "uuid"
 
@@ -74,10 +74,15 @@ export default async function handler(request: GenerationRequest<GenerateDescrip
 
     const jobDescription = await generateDescription(inputWithAppliedDefaults, true);
 
-    await prisma.GenerationRequest.create({
+    const prisma = new PrismaClient();
+
+
+    await prisma.generationRequest.create({
       data: {
         ...inputWithAppliedDefaults,
-        status: RequestStatus.Success
+        keyWords: inputWithAppliedDefaults.keyWords?.join(","),
+        status: RequestStatus.Success,
+        fullTextPrompt: "ok",
       },
     });
 

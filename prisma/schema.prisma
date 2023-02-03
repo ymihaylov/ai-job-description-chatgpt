@@ -21,7 +21,3 @@ model GenerationRequest {
   status String
   responseText String?
 }
-
-model User {
-  id Int @id @default(autoincrement())
-}
