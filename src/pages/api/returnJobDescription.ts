@@ -1,3 +1,4 @@
+import { JobDescriptionGenerator } from "@/utils/JobDescriptionGenerator";
 import RateLimit from "@/utils/rateLimiter";
 import { PrismaClient } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
@@ -28,8 +29,7 @@ const generateDescription = async (input: GenerateDescriptionInput, isMock: bool
   }
 
   const response = await fetch(
-    "https://api.openai.com/v1/engines/text-davinci-003/completions",
-    {
+    "https://api.openai.com/v1/engines/text-davinci-003/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -66,30 +66,33 @@ enum RequestStatus {
   Success = "successed"
 }
 
-export default async function handler(request: GenerationRequest<GenerateDescriptionInput>, response: NextApiResponse) {
+export default async function handler(
+  request: GenerationRequest<GenerateDescriptionInput>,
+  response: NextApiResponse
+) {
   try {
-    await limiter.check(response, 40, 'CACHE_TOKEN') // requests per minute
+    const jobDescriptionGenerator = new JobDescriptionGenerator();
+    jobDescriptionGenerator.generateJobDescription(request.body);
 
-    const inputWithAppliedDefaults = {...request.body, ...inputDefaults};
+    // await limiter.check(response, 40, 'CACHE_TOKEN') // requests per minute
 
-    const jobDescription = await generateDescription(inputWithAppliedDefaults, true);
+    // const inputWithAppliedDefaults = {...request.body, ...inputDefaults};
+    // const jobDescription = await generateDescription(inputWithAppliedDefaults, true);
 
-    const prisma = new PrismaClient();
+    // const prisma = new PrismaClient();
+    // await prisma.generationRequest.create({
+    //   data: {
+    //     ...inputWithAppliedDefaults,
+    //     keyWords: inputWithAppliedDefaults.keyWords?.join(","),
+    //     status: RequestStatus.Success,
+    //     fullTextPrompt: "ok",
+    //   },
+    // });
 
-
-    await prisma.generationRequest.create({
-      data: {
-        ...inputWithAppliedDefaults,
-        keyWords: inputWithAppliedDefaults.keyWords?.join(","),
-        status: RequestStatus.Success,
-        fullTextPrompt: "ok",
-      },
-    });
-
-    response.status(200).json({
-      id: uuidv4(),
-      jobDescription,
-    });
+    // response.status(200).json({
+    //   id: uuidv4(),
+    //   jobDescription,
+    // });
   } catch (e) {
     console.log(e);
     // response.status(429).json({ error: 'Rate limit exceeded' })

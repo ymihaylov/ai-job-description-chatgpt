@@ -20,4 +20,6 @@ model GenerationRequest {
   fullTextPrompt String
   status String
   responseText String?
+  // createdAt
+  // updatedAt
 }
