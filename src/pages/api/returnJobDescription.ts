@@ -35,7 +35,7 @@ export default async function handler(
   });
 
   try {
-    const jobDescriptionGenerator = new JobDescriptionGenerator(true);
+    const jobDescriptionGenerator = new JobDescriptionGenerator(false);
 
     jobDescriptionGenerator
       .generateJobDescription(request.body)
