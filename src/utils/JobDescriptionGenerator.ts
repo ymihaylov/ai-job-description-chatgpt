@@ -37,7 +37,7 @@ export class JobDescriptionGenerator {
 	private readonly shouldMockTheCall: boolean;
 
 	public constructor(shouldMockTheCall: boolean = false) {
-		this.prisma = new PrismaClient();
+		this.prisma = new PrismaClient({datasources: {db: {url: process.env.DATABASE_URL}}});
 		this.shouldMockTheCall = shouldMockTheCall;
 	}
 
@@ -90,6 +90,7 @@ export class JobDescriptionGenerator {
 	}
 
 	private async createRecordInDb(params: GenerateDescriptionParams, prompt: string): Promise<number> {
+
 		const entity = await this.prisma.generationRequest.create({
 		  data: {
 			...params,
