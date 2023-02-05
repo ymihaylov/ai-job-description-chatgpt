@@ -54,7 +54,7 @@ export class JobDescriptionGenerator {
 		let jobDescription: string = await this.makeCallToChatGPT(prompt);
 
 		// 4. Update record in db
-		this.updateStatusInDb(recordId, RequestStatus.SUCCEDED, jobDescription)
+		await this.updateStatusInDb(recordId, RequestStatus.SUCCEDED, jobDescription)
 
 		// 5. Return the description
 		return jobDescription;
