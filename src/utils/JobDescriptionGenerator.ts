@@ -21,7 +21,7 @@ export type GenerationRequestOutputType = {
     updatedAt: Date | null
   }
 
-const defaultParamValues: Pick<GenerateDescriptionParams, 'tone' | 'numWords' | 'keyWords'> = {
+const defaultParamValues: Pick<GenerateDescriptionParams, 'tone' | 'numWords'> = {
 	tone: 'neutral',
 	numWords: 200,
 };
@@ -42,27 +42,19 @@ export class JobDescriptionGenerator {
 	}
 
 	public async generateJobDescription(params: GenerateDescriptionParams) {
-		const paramsAppliedDefaults = {...params, ...defaultParamValues};
+		const paramsAppliedDefaults = {...defaultParamValues, ...params};
 
 		// 1. Genearate prompt
 		const prompt = this.interpolatePrompt(paramsAppliedDefaults);
 
 		// 2. Add record in db
-		let recordId: number = 0;
-		this.createRecordInDb(paramsAppliedDefaults, prompt)
-			.then(rId => {
-				recordId = rId;
-			});
+		let recordId: number = await this.createRecordInDb(paramsAppliedDefaults, prompt);
 
-		// 3. Make a request
-		let jobDescription = '';
-		this.makeCallToChatGPT(prompt)
-			.then(jobDscr => {
-				this.updateStatusInDb(recordId, RequestStatus.SUCCEDED, jobDscr)
-			});
+		// 3. Make a request to ChatGPT
+		let jobDescription: string = await this.makeCallToChatGPT(prompt);
 
 		// 4. Update record in db
-
+		this.updateStatusInDb(recordId, RequestStatus.SUCCEDED, jobDescription)
 
 		// 5. Return the description
 		return jobDescription;
@@ -97,19 +89,16 @@ export class JobDescriptionGenerator {
 		return `Write a job description for a ${params.jobTitle} role ${params.industry ? `in the ${params.industry} industry` : ""}that is around ${params.numWords} words in a ${params.tone} tone. ${hasKeyWords ? `Incorporate the following keywords: ${params.keyWords?.join(', ')}` : ""} The job position should be described in a way that is SEO friendly, highlighting its unique features and benefits.`;
 	}
 
-	private async createRecordInDb(params: GenerateDescriptionParams, prompt: string): Promise<number> {
-		let id: number = 0;
-		await this.prisma.generationRequest.create({
+	private async createRecordInDb(params: GenerateDescriptionParams, prompt: string): number {
+		const entity = await this.prisma.generationRequest.create({
 		  data: {
 			...params,
 			status: RequestStatus.REQUESTED,
 			fullTextPrompt: prompt,
 		  },
-		}).then(result => {
-			id = result.id;
 		});
 
-		return id;
+		return entity.id;
 	}
 
 	private async updateStatusInDb(id: number, status: RequestStatus, responseText: string) {

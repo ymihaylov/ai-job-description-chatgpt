@@ -63,9 +63,12 @@ export default async function handler(
   request: GenerationRequest<GenerateDescriptionInput>,
   response: NextApiResponse
 ) {
-  try {
-    await limiter.check(response, 40, 'CACHE_TOKEN');
 
+  await limiter.check(response, 40, 'CACHE_TOKEN').catch(data => {
+    response.status(429).json({ error: "Rate limit" })
+  });
+
+  try {
     const jobDescriptionGenerator = new JobDescriptionGenerator(true);
 
     jobDescriptionGenerator
@@ -78,6 +81,6 @@ export default async function handler(
       });
   } catch (e) {
     console.log(e);
-    // response.status(429).json({ error: 'Rate limit exceeded' })
+    // response.status(429).json({ error: e. })
   }
 }
