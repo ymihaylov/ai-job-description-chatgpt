@@ -8,7 +8,20 @@ type GenerateDescriptionParams = {
 	numWords: number,
 };
 
-const defaultParamValues: Pick<GenerateDescriptionParams, 'tone' | 'numWords'> = {
+export type GenerationRequestOutputType = {
+    id: number | null
+    jobTitle: string | null
+    industry: string | null
+    tone: string | null
+    numWords: number | null
+    fullTextPrompt: string | null
+    status: string | null
+    responseText: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+const defaultParamValues: Pick<GenerateDescriptionParams, 'tone' | 'numWords' | 'keyWords'> = {
 	tone: 'neutral',
 	numWords: 200,
 };
@@ -20,30 +33,42 @@ enum RequestStatus {
 };
 
 export class JobDescriptionGenerator {
+	private readonly prisma: PrismaClient;
 	private readonly shouldMockTheCall: boolean;
 
 	public constructor(shouldMockTheCall: boolean = false) {
+		this.prisma = new PrismaClient();
 		this.shouldMockTheCall = shouldMockTheCall;
 	}
 
-	public generateJobDescription(params: GenerateDescriptionParams, shouldMock: boolean = false): string {
+	public async generateJobDescription(params: GenerateDescriptionParams) {
+		const paramsAppliedDefaults = {...params, ...defaultParamValues};
+
 		// 1. Genearate prompt
-		const prompt = this.interpolatePrompt({...defaultParamValues, ...params});
+		const prompt = this.interpolatePrompt(paramsAppliedDefaults);
 
 		// 2. Add record in db
-		const id = this.createRecordInDb(params, prompt);
+		let recordId: number = 0;
+		this.createRecordInDb(paramsAppliedDefaults, prompt)
+			.then(rId => {
+				recordId = rId;
+			});
 
 		// 3. Make a request
-		const jobDescription = this.makeCallToChatGPT(prompt);
+		let jobDescription = '';
+		this.makeCallToChatGPT(prompt)
+			.then(jobDscr => {
+				this.updateStatusInDb(recordId, RequestStatus.SUCCEDED, jobDscr)
+			});
 
 		// 4. Update record in db
-		this.updateStatusInDb(id, RequestStatus.SUCCEDED)
+
 
 		// 5. Return the description
-		return '';
+		return jobDescription;
 	}
 
-	private async makeCallToChatGPT(prompt: string): string {
+	private async makeCallToChatGPT(prompt: string): Promise<string> {
 		if (this.shouldMockTheCall) {
 			return "Mocked Job Description!"
 		}
@@ -67,28 +92,35 @@ export class JobDescriptionGenerator {
 	}
 
 	private interpolatePrompt(params: GenerateDescriptionParams): string {
-		return `Write a job description for a  ${params.jobTitle} role
-			${params.industry ? `in the ${params.industry} industry` : ""} that is around ${params.numWords}
-			words in a ${params.tone} tone.
-          	${params.keyWords ? `Incorporate the following keywords: ${params.keyWords.join(', ')}.` : ""}.
-          	The job position should be described in a way that is SEO friendly, highlighting its unique features and benefits.`;
+		const hasKeyWords = params.keyWords && params.keyWords.length > 0;
+
+		return `Write a job description for a ${params.jobTitle} role ${params.industry ? `in the ${params.industry} industry` : ""}that is around ${params.numWords} words in a ${params.tone} tone. ${hasKeyWords ? `Incorporate the following keywords: ${params.keyWords?.join(', ')}` : ""} The job position should be described in a way that is SEO friendly, highlighting its unique features and benefits.`;
 	}
 
-	private async createRecordInDb(params: GenerateDescriptionParams, prompt: string) {
-		const prisma = new PrismaClient();
-		await prisma.generationRequest.create({
+	private async createRecordInDb(params: GenerateDescriptionParams, prompt: string): Promise<number> {
+		let id: number = 0;
+		await this.prisma.generationRequest.create({
 		  data: {
 			...params,
-			keyWords: params.keyWords?.join(","),
-			status: RequestStatus.SUCCEDED,
+			status: RequestStatus.REQUESTED,
 			fullTextPrompt: prompt,
 		  },
+		}).then(result => {
+			id = result.id;
 		});
 
-		return 1;
+		return id;
 	}
 
-	private async updateStatusInDb(id: number, status: RequestStatus) {
-		console.log('ok')
+	private async updateStatusInDb(id: number, status: RequestStatus, responseText: string) {
+		 await this.prisma.generationRequest.update({
+			where: {
+				id: id,
+			},
+			data: {
+				status: status,
+				responseText: responseText
+			},
+		})
 	}
 }

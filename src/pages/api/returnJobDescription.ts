@@ -1,6 +1,5 @@
 import { JobDescriptionGenerator } from "@/utils/JobDescriptionGenerator";
 import RateLimit from "@/utils/rateLimiter";
-import { PrismaClient } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import { v4 as uuidv4 } from "uuid"
 
@@ -60,39 +59,23 @@ interface GenerationRequest<T> extends NextApiRequest {
   body: T
 }
 
-enum RequestStatus {
-  Requested = "requested",
-  Failed = "failed",
-  Success = "successed"
-}
-
 export default async function handler(
   request: GenerationRequest<GenerateDescriptionInput>,
   response: NextApiResponse
 ) {
   try {
-    const jobDescriptionGenerator = new JobDescriptionGenerator();
-    jobDescriptionGenerator.generateJobDescription(request.body);
+    await limiter.check(response, 40, 'CACHE_TOKEN');
 
-    // await limiter.check(response, 40, 'CACHE_TOKEN') // requests per minute
+    const jobDescriptionGenerator = new JobDescriptionGenerator(true);
 
-    // const inputWithAppliedDefaults = {...request.body, ...inputDefaults};
-    // const jobDescription = await generateDescription(inputWithAppliedDefaults, true);
-
-    // const prisma = new PrismaClient();
-    // await prisma.generationRequest.create({
-    //   data: {
-    //     ...inputWithAppliedDefaults,
-    //     keyWords: inputWithAppliedDefaults.keyWords?.join(","),
-    //     status: RequestStatus.Success,
-    //     fullTextPrompt: "ok",
-    //   },
-    // });
-
-    // response.status(200).json({
-    //   id: uuidv4(),
-    //   jobDescription,
-    // });
+    jobDescriptionGenerator
+      .generateJobDescription(request.body)
+      .then(jobDescription => {
+        response.status(200).json({
+          id: uuidv4(),
+          jobDescription: jobDescription,
+        });
+      });
   } catch (e) {
     console.log(e);
     // response.status(429).json({ error: 'Rate limit exceeded' })
