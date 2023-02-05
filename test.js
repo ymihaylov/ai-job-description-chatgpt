@@ -1,7 +1,7 @@
 arr = [];
 
 if (arr.length > 0) {
-	console.log("yaze");
+	console.log("yaz8");
 }
 
 // console.log(`${arr} ? Incorporate the following keywords: ${arr.join(', ')}` : ""}`);
