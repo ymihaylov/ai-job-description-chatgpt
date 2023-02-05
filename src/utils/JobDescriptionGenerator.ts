@@ -89,7 +89,7 @@ export class JobDescriptionGenerator {
 		return `Write a job description for a ${params.jobTitle} role ${params.industry ? `in the ${params.industry} industry` : ""}that is around ${params.numWords} words in a ${params.tone} tone. ${hasKeyWords ? `Incorporate the following keywords: ${params.keyWords?.join(', ')}` : ""} The job position should be described in a way that is SEO friendly, highlighting its unique features and benefits.`;
 	}
 
-	private async createRecordInDb(params: GenerateDescriptionParams, prompt: string): number {
+	private async createRecordInDb(params: GenerateDescriptionParams, prompt: string): Promise<number> {
 		const entity = await this.prisma.generationRequest.create({
 		  data: {
 			...params,
