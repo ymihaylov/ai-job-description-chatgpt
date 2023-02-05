@@ -16,40 +16,6 @@ const inputDefaults: Pick<GenerateDescriptionInput, 'tone' | 'numWords'> = {
   numWords: 200,
 };
 
-const generateDescription = async (input: GenerateDescriptionInput, isMock: boolean = false) => {
-  if ( ! process.env.OPENAI_API_KEY) {
-    return "API Key not provided!";
-  }
-
-  const { jobTitle, industry, keyWords, tone, numWords } = input;
-
-  if (isMock) {
-    return "Mocked description";
-  }
-
-  const response = await fetch(
-    "https://api.openai.com/v1/engines/text-davinci-003/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        prompt: `Write a job description for a  ${jobTitle} role
-        ${industry ? `in the ${industry} industry` : ""} that is around ${numWords}
-          words in a ${tone} tone.
-          ${keyWords ? `Incorporate the following keywords: ${keyWords.join(', ')}.` : ""}.
-          The job position should be described in a way that is SEO friendly, highlighting its unique features and benefits.`,
-        max_tokens: 300,
-        temperature: 0.5,
-      }),
-    }
-  );
-  const data = await response.json();
-
-  return data.choices[0].text;
-};
-
 const limiter = RateLimit({
   interval: 1 * 1000,
   uniqueTokenPerInterval: 1,
@@ -80,7 +46,6 @@ export default async function handler(
         });
       });
   } catch (e) {
-    console.log(e);
-    // response.status(429).json({ error: e. })
+    response.status(429).json({ error: JSON.stringify(e) });
   }
 }
