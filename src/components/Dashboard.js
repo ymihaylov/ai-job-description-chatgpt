@@ -30,13 +30,13 @@ export default function Dashboard() {
         industry,
         keyWords,
         tone,
-        numWords,
+        numWords: parseInt(numWords)
       }),
     }).then(async (res) => {
       const data = await res.json();
       setJobDescription(data.jobDescription.trim());
     }).catch((error) => {
-      alert("Internal server error! Probably reached rate limit of requests.");
+      alert("Internal server error! ChatGPT API is down at this moment.");
     }).finally((data) => setIsGenerating(false));
   };
 
@@ -88,7 +88,7 @@ export default function Dashboard() {
                 onChange={setKeyWords}
                 name="keyWords"
                 id="keyWords"
-                placeHolder={"Keywords - Press enter on every word! (Optional)"}
+                placeHolder={"Keywords - press enter on every word"}
                 classNames={{input: "bg-chatgpt-grey text-white"}}
               />
             </div>

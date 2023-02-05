@@ -1,0 +1,25 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model GenerationRequest {
+  id Int @id @default(autoincrement())
+  jobTitle String @db.VarChar(255)
+  industry String? @db.VarChar(255)
+  keyWords String[] @db.VarChar(255) @default([])
+  tone String? @db.VarChar(255)
+  numWords Int? @default(200)
+  fullTextPrompt String
+  status String @db.VarChar(20)
+  responseText String? @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
